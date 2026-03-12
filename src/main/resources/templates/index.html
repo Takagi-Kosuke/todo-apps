@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>tAsks MainPage</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans JP', sans-serif; background-color: #f8f9fa; }
+        .task-card { transition: transform 0.2s; border: none; }
+        .task-card:hover { transform: translateY(-3px); }
+        .completed-task { opacity: 0.6; }
+        .navbar-brand { font-weight: bold; letter-spacing: 1px; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="#">tAsKs</a>
+            <div class="d-flex align-items-center">
+                <span class="text-light me-3" th:text="${username} + ' さん'">ユーザー名</span>
+                <form th:action="@{/logout}" method="post" class="m-0">
+                    <button type="submit" class="btn btn-outline-light btn-sm">ログアウト</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-10">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4">
+                        <h5 class="card-title mb-3">案件登録</h5>
+                        <form th:action="@{/add}" method="post" class="row g-3">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <div class="col-md-5">
+                                <label class="form-label small text-muted">タスク名</label>
+                                <input type="text" name="title" class="form-control" placeholder="タスク名を入力" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">期限</label>
+                                <input type="date" name="deadline" class="form-control">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small text-muted">優先度</label>
+                                <select name="priority" class="form-select">
+                                    <option value="High">🔥 高</option>
+                                    <option value="Medium" selected>⚡ 中</option>
+                                    <option value="Low">🌱 低</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100 shadow-sm">追加</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="fw-bold">現在のタスク</h4>
+                    <span class="badge bg-secondary" th:text="${tasks.size()} + ' 件'">0 件</span>
+                </div>
+
+                <div class="row row-cols-1 g-3">
+                    <div th:if="${tasks.empty}" class="col text-center py-5">
+                        <p class="text-muted">タスクはありません。今日も素晴らしい一日を！</p>
+                    </div>
+
+                    <div th:each="task : ${tasks}" class="col" th:classappend="${task.completed} ? 'completed-task' : ''">
+                        <div class="card h-100 task-card shadow-sm border-start border-4"
+                             th:classappend="${task.priority == 'High' ? 'border-danger' : (task.priority == 'Low' ? 'border-info' : 'border-warning')}">
+                            <div class="card-body d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3 text-center" style="width: 40px;">
+                                        <div th:if="${task.completed}" class="text-success fs-4">✓</div>
+                                        <div th:unless="${task.completed}" class="text-muted fs-4">○</div>
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-1 fw-bold" th:text="${task.title}"
+                                            th:style="${task.completed} ? 'text-decoration: line-through;' : ''"></h5>
+                                        <div class="small">
+                                            <span class="me-2 text-muted">📅 <span th:text="${task.deadline ?: '未設定'}"></span></span>
+                                            <span class="badge" th:classappend="${task.priority == 'High' ? 'bg-danger' : (task.priority == 'Low' ? 'bg-info' : 'bg-warning')}"
+                                                  th:text="${task.priority}"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex gap-2">
+                                    <form th:action="@{/complete}" method="post" class="m-0">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                        <input type="hidden" name="id" th:value="${task.id}">
+                                        <button type="submit" class="btn btn-sm" th:classappend="${task.completed} ? 'btn-light' : 'btn-outline-success'">
+                                            <span th:text="${task.completed} ? '戻す' : '完了'"></span>
+                                        </button>
+                                    </form>
+                                    <form th:action="@{/delete}" method="post" class="m-0" onsubmit="return confirm('本当に削除しますか？');">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                        <input type="hidden" name="id" th:value="${task.id}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger border-0">🗑</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
